@@ -52,6 +52,8 @@
 : xrg 139 b. inl ;
 : xor 140 b. inl ;
 : gt 141 b. inl ;
+: mul 142 b. inl ;
+: div 143 b. inl ;
 
 \ MOV instructions
 : xpu 144 b. inl ;
