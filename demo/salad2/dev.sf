@@ -1,0 +1,90 @@
+\ is a comment, ignoring the rest of the line
+\ core words
+\ b.  inserts code byte at codeptr
+\ :   starts word definition
+\ ;   end word definition
+\ inl marks current word as inline
+\ .   inserts a LIT sequence for TOS value at codeptr
+\ [   processes a quoted sequence until ]
+\ _   unqotes a quoted sequence
+\ q.  encodes a quoted sequence
+\ w.  inlines word given by XT at codeptr
+
+\ control flow words
+\ -[ ]-  jumped over block
+\ ?[     conditional block
+\ while  inserts loop to begin of previous block
+\ if     prepares conditional block
+
+\ expression words
+\ ,   fetches the variable at TOS index into X/Y reg
+\ =>  assigns Y reg to variable name following it
+\ >:  pushes Y reg to stack and defines new variable
+\ |   defines initial stack layout
+\ !   assigns Y reg to last used variable
+\ >>  pushes X/Y reg to stack, adjusting variable index
+\ >   pushes variable at TOS index to stack
+\ v   drops top of stack, adjusting variable index
+\ ;;  cleans up expression w/o stack write
+
+\ utils
+\ "      writes reverse string into data area
+\ puts   prints string by its address
+\ prnt   prints integer TOS
+
+\ TUI
+\ tui/puts prints string at row,col set previously
+\ tui/pos  sets row,col
+\ tui/clr  clears screen
+
+\ ALU instructions
+: add 128 b. inl ;
+: sub 129 b. inl ;
+: and 130 b. inl ;
+: or 131 b. inl ;
+: inc 132 b. inl ;
+: dec 133 b. inl ;
+: shl 134 b. inl ;
+: shr 135 b. inl ;
+: zx 136 b. inl ;
+: xcg 137 b. inl ;
+: neg 138 b. inl ;
+: xrg 139 b. inl ;
+: xor 140 b. inl ;
+: gt 141 b. inl ;
+
+\ MOV instructions
+: xpu 144 b. inl ;
+: ypu 145 b. inl ;
+: lds 146 b. inl ;
+: drop 148 b. inl ;
+: ldg 149 b. inl ;
+: stg 150 b. inl ;
+: ld 151 b. inl ;
+: st 152 b. inl ;
+
+: 1+ [ , inc ! ] _ ;
+: 1- [ , dec ! ] _ ;
+: .> [ . xpu ] _ ;
+: x drop ;
+
+: tui/hline 45 .> | row col n ch |
+   -[
+      row > col > [ tui/pos ] _ v v
+      [ tui/putc ] _
+      col 1+ n 1-
+    ]- n while
+    v
+;
+
+: tui/vline 124 .> | row col n ch |
+   -[
+      row > col > [ tui/pos ] _ v v
+      [ tui/putc ] _
+      row 1+ n 1-
+    ]- n while
+    v
+;
+
+\ ---------------------
+
