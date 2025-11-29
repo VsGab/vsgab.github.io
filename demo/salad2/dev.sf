@@ -7,30 +7,32 @@
 \ .   inserts a LIT sequence for TOS value at codeptr
 \ [   processes a quoted sequence until ]
 \ _   unqotes a quoted sequence
+\ '   pushes XT of following word
 \ q.  encodes a quoted sequence
+\ d.  sets compiled word stack delta
 \ w.  inlines word given by XT at codeptr
 
 \ control flow words
-\ -[ ]-  jumped over block
-\ ?[     conditional block
-\ while  inserts loop to begin of previous block
-\ if     prepares conditional block
+\ -[ ]- jumped over block
+\ ?[    conditional block
+\ while inserts loop to begin of previous block
+\ if    prepares conditional block
 
 \ expression words
-\ ,   fetches the variable at TOS index into X/Y reg
-\ =>  assigns Y reg to variable name following it
-\ >:  pushes Y reg to stack and defines new variable
-\ |   defines initial stack layout
-\ !   assigns Y reg to last used variable
-\ >>  pushes X/Y reg to stack, adjusting variable index
-\ >   pushes variable at TOS index to stack
-\ v   drops top of stack, adjusting variable index
-\ ;;  cleans up expression w/o stack write
+\ ,  fetches the variable at TOS index into X/Y reg
+\ => assigns Y reg to variable name following it
+\ >: pushes Y reg to stack and defines new variable
+\ |  defines initial stack layout
+\ !  assigns Y reg to last used variable
+\ >> pushes X/Y reg to stack, adjusting variable index
+\ >  pushes variable at TOS index to stack
+\ v  drops top of stack, adjusting variable index
+\ ;; cleans up expression w/o stack write
 
 \ utils
-\ "      writes reverse string into data area
-\ puts   prints string by its address
-\ prnt   prints integer TOS
+\ "     writes reverse string into data area
+\ puts  prints string by its address
+\ prnt  prints integer TOS
 
 \ TUI
 \ tui/puts prints string at row,col set previously
@@ -64,29 +66,45 @@
 : stg 150 b. inl ;
 : ld 151 b. inl ;
 : st 152 b. inl ;
+: 0>y 224 b. inl ;
+: 0<y 192 b. inl ;
 
 : 1+ [ , inc ! ] _ ;
 : 1- [ , dec ! ] _ ;
 : .> [ . xpu ] _ ;
 : x drop ;
+: - 0>y neg 0<y ;
+
+: memdump | a n |
+ -[
+   zx a , ld x> [ prnt ] _ v
+   a 1+ n 1-
+  ]- n while ;
+
+: wlen | xt |
+ xt , zx dec ld dec ld xcg shr >> ;
+
+: wdump [ ' wlen memdump x x ] _ ;
 
 : tui/hline 45 .> | row col n ch |
-   -[
-      row > col > [ tui/pos ] _ v v
-      [ tui/putc ] _
-      col 1+ n 1-
-    ]- n while
-    v
-;
+ -[
+   row > col > [ tui/pos ] _ v v
+   [ tui/putc ] _
+   col 1+ n 1-
+  ]- n while
+ v ;
 
 : tui/vline 124 .> | row col n ch |
-   -[
-      row > col > [ tui/pos ] _ v v
-      [ tui/putc ] _
-      row 1+ n 1-
-    ]- n while
-    v
-;
+ -[
+   row > col > [ tui/pos ] _ v v
+   [ tui/putc ] _
+   row 1+ n 1-
+  ]- n while
+ v ;
 
-\ ---------------------
+"  END DEFS
+
+" puts x
+\ ----------------
+
 
