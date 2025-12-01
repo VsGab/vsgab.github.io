@@ -74,10 +74,11 @@
 : .> [ . xpu ] _ ;
 : x drop ;
 : - 0>y neg 0<y ;
+: ld1> [ , zx ld x> ] _ ;
 
 : memdump | a n |
  -[
-   zx a , ld x> [ prnt ] _ v
+   a ld1> [ prnt ] _ v
    a 1+ n 1-
   ]- n while ;
 

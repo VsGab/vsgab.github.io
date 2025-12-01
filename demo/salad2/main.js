@@ -1,15 +1,18 @@
+const BSP = 8
 const utfDec = new TextDecoder()
 const utfEnc = new TextEncoder()
 const memory = new WebAssembly.Memory({ initial: 2, maximum: 2})
 let wasm = null
 let term_box = null
 let vm_input = null  //  entire input to send to wasm in iobuff sized chunks
+let kbd_input = null
 let editor = null
 const $el = (id) => document.getElementById(id)
 
 
 addEventListener("DOMContentLoaded", (_) => {
     term_box = $el("term-box")
+    kbd_input = $el("kbd-input")
     editor = CodeMirror.fromTextArea($el("editor"), {
         lineNumbers: true,
         theme: "solarized dark",
@@ -20,6 +23,31 @@ addEventListener("DOMContentLoaded", (_) => {
         editor.execCommand("goDocEnd")
     })
     tuiInit($el("tui"))
+
+    // keyboard input
+    kbd_input.addEventListener("input", (e) => {
+        let val = null
+        if (e.inputType == "deleteContentBackward") {
+            val = BSP
+        }
+        else if (e.inputType == "insertText") {
+            val = e.data.charCodeAt(0);
+        } else {
+            console.log(e)
+        }
+
+        if (val && wasm) {wasm.saladcore_kbd(val)}
+        kbd_input.value = " "
+    })
+    // touch input
+    kbd_input.addEventListener("click", (e) => {
+        const coords = [e.layerY, e.layerX]
+        const sz = [Math.max(1,e.target.clientHeight-16),
+                    Math.max(1,e.target.clientWidth-16)]
+        const normCoords = [Math.round(256*coords[0] / sz[0]), Math.round(256*coords[1]/ sz[1])]
+        console.log(normCoords)
+        // TODO
+    })
 });
 
 function vm_array(addr, len) {
@@ -29,7 +57,9 @@ function vm_array(addr, len) {
 function js_io_write(addr, len) {
     if (!len) return
     const arr = vm_array(addr, len)
+    //console.log(arr)
     const msg = utfDec.decode(arr)
+    //console.log(msg)
     term_box.textContent += msg
 }
 
@@ -60,12 +90,17 @@ function js_tui_puts(addr, len) {
     const arr = vm_array(addr, len)
     const msg = utfDec.decode(arr)
     tuiPuts(msg)
-    cursor[1] = cursor[1] + msg.length
+    tuiMove(0, msg.length)
 }
 
 function js_tui_putc(val) {
-    const msg = utfDec.decode(new Uint8Array([val]))
-    tuiPuts(msg)
+    if (val == BSP) {
+        tuiMove(0,-1)
+        tuiPuts(" ")
+    } else {
+        tuiPuts(utfDec.decode(new Uint8Array([val])))
+        tuiMove(0, 1)
+    }
 }
 
 function js_tui_clr() {
@@ -73,11 +108,11 @@ function js_tui_clr() {
 }
 
 function js_tui_width() {
-    return n_cols;
+    return tuiSz()[1];
 }
 
 function js_tui_height() {
-    return n_rows;
+    return tuiSz()[0];
 }
 
 function set_vm_input(str) {
@@ -90,7 +125,7 @@ function rerun_code() {
     wasm.saladcore_js_init()
     set_vm_input(editor.getValue())
     wasm.saladcore_js_exec()
-    editor.focus()
+    kbd_input.focus()
 }
 
 (async () => {
