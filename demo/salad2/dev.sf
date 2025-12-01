@@ -24,7 +24,8 @@
 \ >: pushes Y reg to stack and defines new variable
 \ |  defines initial stack layout
 \ !  assigns Y reg to last used variable
-\ >> pushes X/Y reg to stack, adjusting variable index
+\ >> pushes Y reg to stack, adjusting variable index
+\ x> pushes X reg to stack, adjusting variable index
 \ >  pushes variable at TOS index to stack
 \ v  drops top of stack, adjusting variable index
 \ ;; cleans up expression w/o stack write
@@ -68,13 +69,17 @@
 : st 152 b. inl ;
 : 0>y 224 b. inl ;
 : 0<y 192 b. inl ;
+: 0>x 160 b. inl ; 
 
 : 1+ [ , inc ! ] _ ;
 : 1- [ , dec ! ] _ ;
 : .> [ . xpu ] _ ;
 : x drop ;
-: - 0>y neg 0<y ;
+: -0 0>y neg 0<y ;
 : ld1> [ , zx ld x> ] _ ;
+
+: + 0>x drop 0>y add 0<y 1 -0 d. ;
+: - 0>x drop 0>y sub 0<y 1 -0 d. ;
 
 : memdump | a n |
  -[
