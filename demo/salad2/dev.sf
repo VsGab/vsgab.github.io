@@ -16,15 +16,16 @@
 \ -[ ]- jumped over block
 \ ?[    conditional block
 \ while inserts loop to begin of previous block
-\ if    prepares conditional block
+\ #     numeric jump label
+\ #goto inserts jump to label
 
 \ expression words
 \ ,  fetches the variable at TOS index into X/Y reg
 \ => assigns Y reg to variable name following it
-\ >: pushes Y reg to stack and defines new variable
+\ y>: pushes Y reg to stack and defines new variable
 \ |  defines initial stack layout
 \ !  assigns Y reg to last used variable
-\ >> pushes Y reg to stack, adjusting variable index
+\ y> pushes Y reg to stack, adjusting variable index
 \ x> pushes X reg to stack, adjusting variable index
 \ >  pushes variable at TOS index to stack
 \ v  drops top of stack, adjusting variable index
@@ -67,16 +68,24 @@
 : stg 150 b. inl ;
 : ld 151 b. inl ;
 : st 152 b. inl ;
+
+\ reg get/set
 : 0>y 224 b. inl ;
 : 0<y 192 b. inl ;
-: 0>x 160 b. inl ; 
+: 0>x 160 b. inl ;
+: >y 224 . 0>y or 0<y [ b. ] _ ;
+: <y 192 . 0>y or 0<y [ b. ] _ ;
+: >x 160 . 0>y or 0<y [ b. ] _ ;
 
+\ helpers
 : 1+ [ , inc ! ] _ ;
 : 1- [ , dec ! ] _ ;
 : .> [ . xpu ] _ ;
 : x drop ;
 : -0 0>y neg 0<y ;
 : ld1> [ , zx ld x> ] _ ;
+: >: [ >y y>: ] _ ;
+
 
 : + 0>x drop 0>y add 0<y 1 -0 d. ;
 : - 0>x drop 0>y sub 0<y 1 -0 d. ;
@@ -88,15 +97,14 @@
   ]- n while ;
 
 : wlen | xt |
- xt , zx dec ld dec ld xcg shr >> ;
+ xt , zx dec ld dec ld xcg shr y> ;
 
 : wdump [ ' wlen memdump x x ] _ ;
 
 : tui/hline 45 .> | row col n ch |
- -[
-   row > col > [ tui/pos ] _ v v
-   [ tui/putc ] _
-   col 1+ n 1-
+  row > col > [ tui/pos ] _ v v
+ -[ [ tui/putc ] _
+    n 1-
   ]- n while
  v ;
 
@@ -107,6 +115,17 @@
    row 1+ n 1-
   ]- n while
  v ;
+
+: tui/fill | row col w h ch |
+ -[
+   row > col > [ tui/pos ] _ v v
+   w >: i
+   -[ ch > [ tui/putc ] _ v
+      i 1-
+    ]- i while v
+   row 1+ h 1-
+  ]- h while
+;
 
 "  END DEFS
 
